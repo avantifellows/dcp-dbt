@@ -1,12 +1,24 @@
-{{ config(
-  materialized='table'
-) }}
-
-
-WITH student_data AS (
+SELECT f.*,
+    us.name AS school_name
+FROM (
     SELECT
         s.student_id,
         s.user_id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        g.number AS grade,
+        u.phone,
+        u.gender,
+        u.address,
+        u.city,
+        u.district,
+        u.state,
+        u.pincode,
+        u.role,
+        u.whatsapp_phone,
+        u.date_of_birth,
+        u.country,
         s.father_name,
         s.father_phone,
         s.mother_name,
@@ -42,90 +54,37 @@ WITH student_data AS (
         s.grade_10_marksheet,
         s.photo,
         s.planned_competitive_exams,
-        g.number AS grade
+        ug.batch_id,
+        ug.auth_group_name,
+        ug.program_name
     FROM
-        {{ source('source_postgres', 'student') }} s
-    LEFT JOIN
-        {{ source('source_postgres', 'grade') }} g ON s.grade_id = g.id
-),
-user_data AS (
-    SELECT
-        u.id AS user_id,
-        u.first_name,
-        u.last_name,
-        u.email,
-        u.phone,
-        u.gender,
-        u.address,
-        u.city,
-        u.district,
-        u.state,
-        u.pincode,
-        u.role,
-        u.whatsapp_phone,
-        u.date_of_birth,
-        u.country
-    FROM
-        {{ source('source_postgres', 'user') }} u
-),
-group_user_data AS (
+        {{ source('source_postgres', 'student') }} AS s
+    LEFT JOIN  {{ source('source_postgres', 'user') }} AS u ON s.user_id = u.id
+    LEFT JOIN  {{ source('source_postgres', 'grade') }} AS g ON s.grade_id = g.id
+    LEFT JOIN (
+        SELECT
+            gu.user_id,
+            b.batch_id,
+            ag.name AS auth_group_name,
+            p.name AS program_name
+        FROM
+            {{ source('source_postgres', 'group_user') }} AS gu
+        LEFT JOIN  {{ source('source_postgres', 'group') }} AS grp ON gu.group_id = grp.id
+        LEFT JOIN  {{ source('source_postgres', 'batch') }} AS b ON grp.child_id = b.id
+        LEFT JOIN  {{ source('source_postgres', 'auth_group') }} AS ag ON b.auth_group_id = ag.id
+        LEFT JOIN  {{ source('source_postgres', 'program') }} AS p ON b.program_id = p.id
+        WHERE
+            grp.TYPE = 'batch'
+    ) AS ug ON u.id = ug.user_id
+) AS f
+LEFT JOIN (
     SELECT
         gu.user_id,
-        b.batch_id,
-        ag.name AS auth_group_name,
-        p.name AS program_name
+        sch.name
     FROM
-        {{ source('source_postgres', 'group_user') }} gu
-    LEFT JOIN
-        {{ source('source_postgres', 'group') }} grp ON gu.group_id = grp.id
-    LEFT JOIN
-        {{ source('source_postgres', 'batch') }} b ON grp.child_id = b.id
-    LEFT JOIN
-        {{ source('source_postgres', 'auth_group') }} ag ON b.auth_group_id = ag.id
-    LEFT JOIN
-        {{ source('source_postgres', 'program') }} p ON b.program_id = p.id
-    WHERE
-        grp.type = 'batch'
-),
-school_data AS (
-    SELECT
-        gu.user_id,
-        sch.name AS school_name
-    FROM
-        {{ source('source_postgres', 'group_user') }} gu
-    LEFT JOIN
-        {{ source('source_postgres', 'group') }} grp ON gu.group_id = grp.id
-    LEFT JOIN
-        {{ source('source_postgres', 'school') }} sch ON grp.child_id = sch.id
+        {{ source('source_postgres', 'group_user') }} AS gu
+    LEFT JOIN  {{ source('source_postgres', 'group') }} AS grp ON gu.group_id = grp.id
+    LEFT JOIN  {{ source('source_postgres', 'school') }} AS sch ON grp.child_id = sch.id
     WHERE
         grp.type = 'school'
-)
-SELECT
-    sd.*,
-    ud.first_name,
-    ud.last_name,
-    ud.email,
-    ud.phone,
-    ud.gender,
-    ud.address,
-    ud.city,
-    ud.district,
-    ud.state,
-    ud.pincode,
-    ud.role,
-    ud.whatsapp_phone,
-    ud.date_of_birth,
-    ud.country,
-    gud.batch_id,
-    gud.auth_group_name,
-    gud.program_name,
-    sd.grade,
-    us.school_name
-FROM
-    student_data sd
-LEFT JOIN
-    user_data ud ON sd.user_id = ud.user_id
-LEFT JOIN
-    group_user_data gud ON sd.user_id = gud.user_id
-LEFT JOIN
-    school_data us ON sd.user_id = us.user_id
+) AS us ON f.user_id = us.user_id
