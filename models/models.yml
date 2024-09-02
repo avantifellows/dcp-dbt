@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: enrollment_journey_model
+    description: "This model tracks the journey of enrollments across various groups."
+    columns:
+      - name: academic_year
+        description: "The academic year of the enrollment."
+      - name: is_current
+        description: "Indicates if the enrollment is current."
+      - name: start_date
+        description: "The start date of the enrollment."
+      - name: end_date
+        description: "The end date of the enrollment."
+      - name: record_inserted_at
+        description: "Timestamp when the record was inserted."
+      - name: record_updated_at
+        description: "Timestamp when the record was last updated."
+      - name: user_id
+        description: "Unique identifier for the user."
+      - name: subject
+        description: "The subject associated with the enrollment."
+      - name: grade
+        description: "The grade of the student at the time of enrollment."
+      - name: group_type
+        description: "Type of the group associated with the enrollment."
+      - name: group_name
+        description: "Name of the group associated with the enrollment."
+
+  - name: student_demographic_profile
+    description: "Model capturing demographic information about students."
+    columns:
+      - name: student_id
+        description: "Unique identifier for the student."
+      - name: gender
+        description: "Gender of the student."
+      - name: date_of_birth
+        description: "The student's date of birth."
+      - name: grade
+        description: "The current grade of the student."
+      - name: school_name
+        description: "The name of the school the student is enrolled in."

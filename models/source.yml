@@ -10,35 +10,48 @@ sources:
       
       - name: user
         identifier: user
-        description: "Daily basis action for field workers."
+        description: "User Info"
       
       - name: grade
         identifier: grade
-        description: "approval status for subjects and encounters"
+        description: "students grade"
 
       - name: group
         identifier: group
-        description: "address api for waterbodies - niti 2023" 
+        description: "" 
 
       - name: batch
         identifier: batch
-        description: "Daily basis action for field workers."
+        description: ""
       
       - name: group_user
         identifier: group_user
-        description: "approval status for subjects and encounters"
+        description: ""
 
       - name: auth_group
         identifier: auth_group 
-        description: "address api for waterbodies - niti 2023"
+        description: ""
 
       - name: program
         identifier: program 
-        description: "address api for waterbodies - niti 2023"
+        description: ""
 
       - name: school
         identifier: school
-        description: "address api for waterbodies - niti 2023"
+        description: ""
+
+      - name: subject
+        identifier: subject
+        description: ""
+  
+      - name: enrollment_record
+        identifier: enrollment_record
+        description: "Enrollment record table"
+
+      
+
+
+      
 
    
 
