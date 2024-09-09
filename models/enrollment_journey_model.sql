@@ -2,41 +2,56 @@
   materialized='table'
 ) }}
 
+/* 
+Define a CTE (Common Table Expression) to extract and structure the enrollment data
+*/
+
 WITH enrollment_data AS (
     SELECT
-        er.academic_year,
-        er.is_current,
-        er.start_date AS start_date,
-        er.end_date AS end_date,
-        er.inserted_at AS record_inserted_at,
-        er.updated_at AS record_updated_at,
-        er.user_id,
-        er.subject_id,
-        er.grade_id,
-        er.group_type,
-        er.group_id
+        enrollment_record.academic_year,
+        enrollment_record.is_current,
+        enrollment_record.start_date,
+        enrollment_record.end_date,
+        enrollment_record.inserted_at AS record_inserted_at,
+        enrollment_record.updated_at AS record_updated_at,
+        enrollment_record.user_id,
+        enrollment_record.subject_id,
+        enrollment_record.grade_id,
+        enrollment_record.group_type,
+        enrollment_record.group_id
     FROM
-        {{ source('source_postgres', 'enrollment_record') }} AS er
-    WHERE
-        er.is_current = true
+        {{ source('source_postgres', 'enrollment_record') }}
 )
 
+/*
+In main query join enrollment data with subject, grade, batch, auth_group, school, user, and student tables
+*/
+
 SELECT
-    ed.academic_year,
-    ed.is_current,
-    ed.start_date,
-    ed.end_date,
-    ed.record_inserted_at,
-    ed.record_updated_at,
-    ed.user_id,
-    s.name AS subject,
-    g.number AS grade,
-    ed.group_type,
-    COALESCE(b.name, ag.name, sc.name) AS group_name
+    enrollment_data.academic_year,
+    enrollment_data.is_current,
+    enrollment_data.start_date,
+    enrollment_data.end_date,
+    enrollment_data.record_inserted_at,
+    enrollment_data.record_updated_at,
+    enrollment_data.user_id,
+    subject.name AS subject,
+    grade.number AS grade,
+    enrollment_data.group_type,
+    COALESCE(batch.name, auth_group.name, school.name) AS group_name,
+    user.gender,
+    user.date_of_birth,
+    user.first_name, 
+    user.last_name,
+    student.category,
+    student.student_id
 FROM
-    enrollment_data AS ed
-    LEFT JOIN {{ source('source_postgres', 'subject') }} AS s ON s.id = ed.subject_id
-    LEFT JOIN {{ source('source_postgres', 'grade') }}  AS g ON g.id = ed.grade_id
-    LEFT JOIN {{ source('source_postgres', 'batch') }} AS b ON ed.group_type = 'batch' AND b.id = ed.group_id
-    LEFT JOIN {{ source('source_postgres', 'auth_group') }} AS ag ON ed.group_type = 'auth_group' AND ag.id = ed.group_id
-    LEFT JOIN {{ source('source_postgres', 'school') }}  AS sc ON ed.group_type = 'school' AND sc.id = ed.group_id
+    enrollment_data
+    LEFT JOIN {{ source('source_postgres', 'subject') }} AS subject ON subject.id = enrollment_data.subject_id
+    LEFT JOIN {{ source('source_postgres', 'grade') }}  AS grade ON grade.id = enrollment_data.grade_id
+    LEFT JOIN {{ source('source_postgres', 'batch') }} AS batch ON enrollment_data.group_type = 'batch' AND batch.id = enrollment_data.group_id
+    LEFT JOIN {{ source('source_postgres', 'auth_group') }} AS auth_group ON enrollment_data.group_type = 'auth_group' AND auth_group.id = enrollment_data.group_id
+    LEFT JOIN {{ source('source_postgres', 'school') }}  AS school ON enrollment_data.group_type = 'school' AND school.id = enrollment_data.group_id
+    LEFT JOIN {{ source('source_postgres', 'school') }} AS status ON enrollment_data.group_type = 'status' AND status.id = enrollment_data.group_id
+    LEFT JOIN {{ source('source_postgres', 'user') }} AS user ON enrollment_data.user_id = user.id
+    LEFT JOIN {{ source('source_postgres', 'student') }} AS student ON user.id = student.user_id
